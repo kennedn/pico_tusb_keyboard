@@ -23,6 +23,8 @@ const PinKey pin_keys[NUM_PINS] = {
 
 Make sure `NUM_PINS` is equal to the amount of pin-key combinations specified in `pin_keys`. In this case, there are 4 connected pins. Note that the pico has 26 usable gpio pins.
 
+> NOTE: If the Pico LED remains on, it means that the Pico has not been able to establish a USB connection with your device.
+
 ## Hardware
 
 The input pins use the internal pull up resistor on the pico. They read `1` when **not** pressed. Connect a pin to ground to generate a key press for that pin.

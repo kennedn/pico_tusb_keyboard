@@ -13,6 +13,12 @@ target_include_directories(keyboard PUBLIC
 
 # In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
 # for TinyUSB device support and tinyusb_board for the additional board support library used by the example
-target_link_libraries(keyboard PUBLIC pico_stdlib tinyusb_device tinyusb_board)
+target_link_libraries(keyboard pico_stdlib tinyusb_device tinyusb_board)
+if (PICO_CYW43_SUPPORTED)
+    target_link_libraries(keyboard
+        pico_cyw43_arch_none
+    )
+endif()
+
 
 pico_add_extra_outputs(keyboard)

@@ -24,11 +24,12 @@
  */
 
 #include "pico/stdlib.h"
-
 #include "bsp/board.h"
 #include "tusb.h"
-
 #include "usb_descriptors.h"
+#ifdef RASPBERRYPI_PICO_W
+#include "pico/cyw43_arch.h"
+#endif
 
 
 typedef struct
@@ -37,8 +38,10 @@ typedef struct
     uint8_t modifier; // HID_MODIFIER_*
     uint8_t key;      // HID_KEY_*
 } PinKey;
+bool device_mounted = false;
 
 #define NUM_PINS 4
+
 // Note: Tiny USB HID_KEY_* mappings assume a US keyboard layout. I have a UK keyboard layout. Hence the discrepancy between comment and code.
 const PinKey pin_keys[NUM_PINS] = {
     {12, KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_GRAVE},                          // Ctrl + Shift + `
@@ -46,6 +49,28 @@ const PinKey pin_keys[NUM_PINS] = {
     {14, KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_BACKSLASH},                      // Ctrl + Shift + '
     {15, KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_LEFTSHIFT | KEYBOARD_MODIFIER_LEFTALT, HID_KEY_V},  // Ctrl + Shift + Alt + v
 };
+
+// Invoked when device is mounted
+void tud_mount_cb(void) {
+    device_mounted = true;
+}
+
+// Invoked when device is unmounted
+void tud_umount_cb(void) {
+    device_mounted = false;
+}
+
+// Invoked when usb bus is suspended
+// remote_wakeup_en : if host allow us  to perform remote wakeup
+// Within 7ms, device must draw an average of current less than 2.5 mA from bus
+void tud_suspend_cb(bool remote_wakeup_en) {
+    device_mounted = false;
+}
+
+// Invoked when usb bus is resumed
+void tud_resume_cb(void) {
+    device_mounted = true;
+}
 
 // Invoked when received GET_REPORT control request, Stub
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t *buffer, uint16_t reqlen)
@@ -119,6 +144,11 @@ void hid_task(void) {
 int main(void) {
     board_init();
     tusb_init();
+    #ifdef RASPBERRYPI_PICO_W
+    if (cyw43_arch_init()) {
+        return -1;
+    }
+    #endif
 
     for (size_t i = 0; i < NUM_PINS; i++) {
         gpio_init(pin_keys[i].pin);
@@ -129,6 +159,11 @@ int main(void) {
     while (1) {
         tud_task(); // tinyusb device task
         hid_task(); // keyboard implementation
+        #ifdef RASPBERRYPI_PICO_W
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, !device_mounted);
+        #else
+        board_led_write(!device_mounted);
+        #endif
     }
 
     return 0;
