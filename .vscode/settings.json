@@ -1,0 +1,28 @@
+{
+    "files.associations": {
+        "*.pio": "pio",
+        "clocks.h": "c",
+        "stdio.h": "c",
+        "cstdlib": "c",
+        "system_error": "c",
+        "stdlib.h": "c",
+        "cyw43_ll.h": "c",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string.h": "c",
+        "time.h": "c",
+        "pbuf.h": "c",
+        "array": "cpp",
+        "string_view": "cpp",
+        "span": "cpp",
+        "charconv": "cpp",
+        "chrono": "cpp",
+        "cstdint": "cpp",
+        "compare": "cpp",
+        "pwm.h": "c"
+    }
+}
