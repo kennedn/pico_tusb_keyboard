@@ -105,6 +105,7 @@ static void send_hid_report(PinKey *pin_key) {
     static bool send_empty = false;
 
     if (pin_key) {
+        // tud_hid_keyboard_report expects an array of six key presses, but for this use case we only care about sending one at a time.
         tud_hid_keyboard_report(REPORT_ID_KEYBOARD, pin_key->modifier, (uint8_t[6]){pin_key->key});
         send_empty = true;
     }
