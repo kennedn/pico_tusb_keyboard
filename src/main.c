@@ -29,8 +29,13 @@
 #include "usb_descriptors.h"
 #ifdef RASPBERRYPI_PICO_W
 #include "pico/cyw43_arch.h"
+
+#define BOARD_LED_WRITE(value) cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, value)
+#else
+#define BOARD_LED_WRITE(value) board_led_write(value)
 #endif
 
+#define NUM_PINS 4
 
 typedef struct
 {
@@ -38,9 +43,6 @@ typedef struct
     uint8_t modifier; // HID_MODIFIER_*
     uint8_t key;      // HID_KEY_*
 } PinKey;
-bool device_mounted = false;
-
-#define NUM_PINS 4
 
 // Note: Tiny USB HID_KEY_* mappings assume a US keyboard layout. I have a UK keyboard layout. Hence the discrepancy between comment and code.
 const PinKey pin_keys[NUM_PINS] = {
@@ -50,26 +52,27 @@ const PinKey pin_keys[NUM_PINS] = {
     {15, KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_LEFTSHIFT | KEYBOARD_MODIFIER_LEFTALT, HID_KEY_V},  // Ctrl + Shift + Alt + v
 };
 
+
 // Invoked when device is mounted
 void tud_mount_cb(void) {
-    device_mounted = true;
+    BOARD_LED_WRITE(false);
 }
 
 // Invoked when device is unmounted
 void tud_umount_cb(void) {
-    device_mounted = false;
+    BOARD_LED_WRITE(true);
 }
 
 // Invoked when usb bus is suspended
 // remote_wakeup_en : if host allow us  to perform remote wakeup
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(bool remote_wakeup_en) {
-    device_mounted = false;
+    BOARD_LED_WRITE(true);
 }
 
 // Invoked when usb bus is resumed
 void tud_resume_cb(void) {
-    device_mounted = true;
+    BOARD_LED_WRITE(false);
 }
 
 // Invoked when received GET_REPORT control request, Stub
@@ -96,8 +99,7 @@ PinKey* get_keypress() {
 
 static void send_hid_report(PinKey *pin_key) {
     // skip if hid is not ready yet
-    if (!tud_hid_ready())
-    {
+    if (!tud_hid_ready()) {
         return;
     }
 
@@ -160,11 +162,6 @@ int main(void) {
     while (1) {
         tud_task(); // tinyusb device task
         hid_task(); // keyboard implementation
-        #ifdef RASPBERRYPI_PICO_W
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, !device_mounted);
-        #else
-        board_led_write(!device_mounted);
-        #endif
     }
 
     return 0;
